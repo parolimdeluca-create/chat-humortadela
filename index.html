@@ -38,12 +38,14 @@
         #cor-boneco { padding: 8px; border-radius: 8px; border: none; font-size: 16px; width: 230px; cursor: pointer; }
         #btn-entrar { padding: 10px 30px; border-radius: 8px; border: none; background-color: #2ecc71; color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
 
-        /* 📱 CONTAINER RESPONSIVO FORÇANDO PROPORÇÃO */
+        /* 📱 CONTAINER RESPONSIVO (Envolve o mapa + histórico juntos) */
         #wrapper-jogo {
             display: flex;
-            flex-direction: column;
+            flex-direction: row; /* Alinha o cenário e o histórico lado a lado */
             align-items: center;
             justify-content: center;
+            gap: 20px; /* Espaço entre o jogo e o histórico */
+            transform-origin: center center;
         }
 
         /* 🗺️ CENÁRIO GIGANTE FIXO (1080x768) */
@@ -56,7 +58,57 @@
             border: 4px solid #2c3e50;
             border-radius: 8px;
             overflow: hidden;
-            transform-origin: center center;
+        }
+
+        /* 📜 PAINEL DE HISTÓRICO LATERAL */
+        #historico-chat {
+            width: 280px;
+            height: 768px; /* Mesma altura do cenário para ficar alinhado */
+            background-color: rgba(0, 0, 0, 0.65);
+            border: 4px solid #2c3e50;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        #historico-chat h3 {
+            color: #fff;
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #2c3e50;
+            padding-bottom: 8px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        #lista-mensagens {
+            flex-1: 1;
+            overflow-y: auto; /* Permite scroll se necessário */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 5px;
+        }
+
+        /* Estilo de cada linha de texto no histórico */
+        .linha-msg {
+            color: #f1f1f1;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .linha-msg .nome {
+            font-weight: bold;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         /* 👤 ESTILO DO BONECO */
@@ -142,6 +194,11 @@
 
     <div id="wrapper-jogo">
         <div id="cenario"></div>
+        
+        <div id="historico-chat">
+            <h3>Histórico de Conversas</h3>
+            <div id="lista-mensagens"></div>
+        </div>
     </div>
 
     <div id="interface-chat">
@@ -153,33 +210,34 @@
     <script>
         const socket = io();
         const cenario = document.getElementById('cenario');
+        const wrapperJogo = document.getElementById('wrapper-jogo');
         const inputMensagem = document.getElementById('mensagem');
         const inputNick = document.getElementById('nick');
+        const listaMensagens = document.getElementById('lista-mensagens');
 
         let meuId = null;
         let minhaPosicao = { x: 540, y: 384 }; 
         const usuariosConectados = {};
 
-        // Foco inicial direto no campo do Nick para o usuário já abrir digitando
         inputNick.focus();
 
+        // Altera a escala para englobar a nova largura total (1080 mapa + 280 historico + 20 gap = ~1380)
         function ajustarEscala() {
             const larguraTela = window.innerWidth;
             const alturaTela = window.innerHeight;
             
-            const escalaX = larguraTela / 1120; 
+            const escalaX = larguraTela / 1420; 
             const escalaY = (alturaTela - 80) / 808; 
             
             let escalaFinal = Math.min(escalaX, escalaY);
             if (escalaFinal > 1) escalaFinal = 1;
 
-            cenario.style.transform = `scale(${escalaFinal})`;
+            wrapperJogo.style.transform = `scale(${escalaFinal})`;
         }
 
         window.addEventListener('resize', ajustarEscala);
         window.addEventListener('load', ajustarEscala);
 
-        // 🚪 FUNÇÃO DE LOGIN
         function fazerLogin() {
             const nickDigitado = inputNick.value.trim();
             const corSelecionada = document.getElementById('cor-boneco').value;
@@ -196,11 +254,8 @@
             socket.emit('entrar_na_sala', { nick: nickDigitado, cor: corSelecionada });
         }
 
-        // 🌟 NOVO: Escuta o Enter no campo do Nick para entrar direto!
         inputNick.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                fazerLogin();
-            }
+            if (e.key === 'Enter') fazerLogin();
         });
 
         document.addEventListener('click', (e) => {
@@ -240,6 +295,9 @@
                     const textoNick = document.createElement('div');
                     textoNick.className = 'nome-usuario';
                     textoNick.innerText = usuarios[id].nick; 
+                    // Salva o nick dentro do elemento para puxar fácil depois no histórico
+                    container.setAttribute('data-nick', usuarios[id].nick);
+                    container.setAttribute('data-cor', usuarios[id].cor);
                     container.appendChild(textoNick);
 
                     cenario.appendChild(container);
@@ -251,13 +309,33 @@
             });
         });
 
+        // 🌟 ATUALIZADO: Escuta as falas e joga no painel lateral com limite de 20 itens
         socket.on('usuario_falou', (dados) => {
             const container = usuariosConectados[dados.id];
             if (container) {
+                // 1. Mostrar no balão de fala clássico
                 const balao = container.querySelector('.balao');
                 balao.innerText = dados.mensagem;
                 balao.style.display = 'block';
                 setTimeout(() => { balao.style.display = 'none'; }, 4000);
+
+                // 2. Adicionar no Histórico Lateral
+                const nickDoUsuario = container.getAttribute('data-nick') || 'Usuário';
+                const corDoUsuario = container.getAttribute('data-cor') || '#fff';
+
+                const novaLinha = document.createElement('div');
+                novaLinha.className = 'linha-msg';
+                novaLinha.innerHTML = `<span class="nome" style="color: ${corDoUsuario}">${nickDoUsuario}:</span> ${dados.mensagem}`;
+                
+                listaMensagens.appendChild(novaLinha);
+
+                // 🌟 LIMITADOR AUTOMÁTICO: Mantém apenas as 20 mensagens mais recentes
+                while (listaMensagens.children.length > 20) {
+                    listaMensagens.removeChild(listaMensagens.firstChild); // Remove a mais antiga (a primeira da lista)
+                }
+
+                // Faz o scroll descer automaticamente para focar na mensagem nova
+                listaMensagens.scrollTop = listaMensagens.scrollHeight;
             }
         });
 
