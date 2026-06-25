@@ -8,101 +8,136 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #222;
-            overflow: hidden;
+            background-color: #1a1a1a;
             font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        /* O cenário onde os bonecos vão andar */
-        #cenario {
-            position: relative;
+        /* 🚪 TELA DE LOGIN (NICK E COR) */
+        #tela-login {
+            position: fixed;
             width: 100vw;
             height: 100vh;
-            background-color: #34495e; /* Cor de fundo estilosa */
+            background-color: #2c3e50;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            gap: 15px;
         }
 
-        /* Estilo do Bonequinho */
-        .boneco {
+        #tela-login h2 { color: white; margin-bottom: 10px; }
+        #nick { padding: 10px 15px; border-radius: 8px; border: none; width: 200px; font-size: 16px; outline: none; }
+        #cor-boneco { padding: 8px; border-radius: 8px; border: none; font-size: 16px; width: 230px; cursor: pointer; }
+        #btn-entrar { padding: 10px 30px; border-radius: 8px; border: none; background-color: #2ecc71; color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
+
+        /* 🗺️ CENÁRIO COM LIMITE FIXO (RESOLUÇÃO IGUAL PARA TODOS) */
+        #cenario {
+            position: relative;
+            width: 800px;  /* Largura máxima fixa */
+            height: 600px; /* Altura máxima fixa */
+            background-color: #34495e;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 4px solid #2c3e50;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* 👤 ESTILO DO BONECO COM TEXTO INTEGRADO */
+        .boneco-container {
             position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            transition: left 0.1s linear, top 0.1s linear;
+        }
+
+        .boneco {
             width: 50px;
             height: 50px;
-            background-color: #e67e22; /* Laranja Humortadela */
             border-radius: 50%;
-            transition: left 0.1s linear, top 0.1s linear;
             display: flex;
             justify-content: center;
             align-items: center;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
-        /* Olhinhos do boneco para dar carisma */
-        .boneco::before {
-            content: "👀";
-            font-size: 20px;
+        .boneco::before { content: "👀"; font-size: 20px; }
+
+        /* Nome do jogador embaixo do boneco */
+        .nome-usuario {
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-top: 5px;
+            white-space: nowrap;
         }
 
-        /* Balão de fala que fica acima do boneco */
+        /* Balão de fala */
         .balao {
             position: absolute;
-            bottom: 60px;
+            bottom: 80px;
             background-color: white;
-            padding: 8px 12px;
+            padding: 6px 12px;
             border-radius: 12px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: black;
             white-space: nowrap;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             display: none;
+            z-index: 5;
         }
 
-        /* Caixa inferior de envio de mensagens */
+        /* 💬 CAIXA DE TEXTO DO CHAT */
         #interface-chat {
             position: fixed;
             bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
             display: flex;
             gap: 10px;
-            background: rgba(0,0,0,0.6);
-            padding: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 15px;
             border-radius: 20px;
             z-index: 10;
         }
 
-        #mensagem {
-            padding: 8px 15px;
-            border-radius: 15px;
-            border: none;
-            width: 250px;
-            outline: none;
-        }
-
-        #btn-enviar {
-            padding: 8px 15px;
-            border-radius: 15px;
-            border: none;
-            background-color: #2ecc71;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
+        #mensagem { padding: 8px 15px; border-radius: 15px; border: none; width: 250px; outline: none; }
+        #btn-enviar { padding: 8px 15px; border-radius: 15px; border: none; background-color: #e67e22; color: white; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="cenario">
-        <!-- Os bonecos dos usuários vão surgir aqui dentro dinamicamente -->
+    <div id="tela-login">
+        <h2>Entrar no ParolaChat</h2>
+        <input type="text" id="nick" placeholder="Seu apelido/Nick..." autocomplete="off" maxlength="12">
+        <select id="cor-boneco">
+            <option value="#e67e22">Laranja Clássico</option>
+            <option value="#3498db">Azul Estiloso</option>
+            <option value="#2ecc71">Verde Humortadela</option>
+            <option value="#9b59b6">Roxo Moderno</option>
+            <option value="#e74c3c">Vermelho Fogo</option>
+            <option value="#f1c40f">Amarelo Sol</option>
+        </select>
+        <button id="btn-entrar" onclick="fazerLogin()">Entrar na Sala</button>
     </div>
+
+    <div id="cenario"></div>
 
     <div id="interface-chat">
         <input type="text" id="mensagem" placeholder="Digite sua mensagem e aperte Enter..." autocomplete="off">
         <button id="btn-enviar" onclick="enviarMensagem()">Falar</button>
     </div>
 
-    <!-- Conexão com o Servidor -->
-    <script src="/socket.io/socket.io.js"></script>
-    <!-- Conexão com o Servidor -->
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -113,93 +148,120 @@
         let minhaPosicao = { x: 200, y: 200 }; 
         const usuariosConectados = {};
 
-        // 🌟 NOVO: Mantém o foco na caixinha de texto o tempo todo
-        // Assim que a página abre, ela já foca na caixinha
-        inputMensagem.focus();
+        // 🚪 FUNÇÃO DE LOGIN
+        function fazerLogin() {
+            const nickDigitado = document.getElementById('nick').value.trim();
+            const corSelecionada = document.getElementById('cor-boneco').value;
 
-        // Se o usuário clicar no cenário, força o foco a voltar para a caixinha na hora
+            if (nickDigitado === "") {
+                alert("Por favor, digite um apelido para entrar!");
+                return;
+            }
+
+            // Esconde a tela de login
+            document.getElementById('tela-login').style.display = 'none';
+
+            // Puxa o foco definitivo para as mensagens
+            inputMensagem.focus();
+
+            // Envia os dados escolhidos para o servidor
+            socket.emit('entrar_na_sala', { nick: nickDigitado, cor: corSelecionada });
+        }
+
+        // Mantém o foco automático na caixinha de texto o tempo todo
         document.addEventListener('click', (e) => {
-            // Só não puxa o foco se ele estiver clicando no botão de falar
-            if (e.target !== document.getElementById('btn-enviar')) {
+            if (document.getElementById('tela-login').style.display === 'none' && e.target !== document.getElementById('btn-enviar')) {
                 inputMensagem.focus();
             }
         });
 
-        // 1. Assim que conectamos, recebemos o nosso ID do servidor
-        socket.on('connect', () => {
-            meuId = socket.id;
-        });
+        socket.on('connect', () => { meuId = socket.id; });
 
-        // 2. Escuta a lista de usuários para desenhar na tela
+        // Atualiza e desenha os bonecos na tela com seus limites fixos
         socket.on('atualizar_usuarios', (usuarios) => {
             Object.keys(usuariosConectados).forEach(id => {
-                if (!usuarios[id]) {
+                if (!usuarios[id] || !usuarios[id].ativo) {
                     usuariosConectados[id].remove();
                     delete usuariosConectados[id];
                 }
             });
 
             Object.keys(usuarios).forEach(id => {
-                let boneco = usuariosConectados[id];
+                if (!usuarios[id].ativo) return; // Só desenha quem já fez login
 
-                if (!boneco) {
-                    boneco = document.createElement('div');
-                    boneco.className = 'boneco';
-                    
+                let container = usuariosConectados[id];
+
+                if (!container) {
+                    // Cria o container do boneco + nome
+                    container = document.createElement('div');
+                    container.className = 'boneco-container';
+
+                    // Cria o balão de fala
                     const balao = document.createElement('div');
                     balao.className = 'balao';
-                    boneco.appendChild(balao);
+                    container.appendChild(balao);
 
-                    cenario.appendChild(boneco);
-                    usuariosConectados[id] = boneco;
+                    // Cria a esfera do boneco
+                    const corpoBoneco = document.createElement('div');
+                    corpoBoneco.className = 'boneco';
+                    corpoBoneco.style.backgroundColor = usuarios[id].cor; // Usa a cor escolhida!
+                    container.appendChild(corpoBoneco);
+
+                    // Cria o texto do Nick
+                    const textoNick = document.createElement('div');
+                    textoNick.className = 'nome-usuario';
+                    textoNick.innerText = usuarios[id].nick; // Usa o nick escolhido!
+                    container.appendChild(textoNick);
+
+                    cenario.appendChild(container);
+                    usuariosConectados[id] = container;
                 }
 
-                boneco.style.left = usuarios[id].x + 'px';
-                boneco.style.top = usuarios[id].y + 'px';
+                // Move o container respeitando a resolução idêntica de 800x600
+                container.style.left = (usuarios[id].x - 15) + 'px';
+                container.style.top = (usuarios[id].y - 15) + 'px';
             });
         });
 
-        // 3. Escuta quando alguém fala algo
         socket.on('usuario_falou', (dados) => {
-            const boneco = usuariosConectados[dados.id];
-            if (boneco) {
-                const balao = boneco.querySelector('.balao');
+            const container = usuariosConectados[dados.id];
+            if (container) {
+                const balao = container.querySelector('.balao');
                 balao.innerText = dados.mensagem;
                 balao.style.display = 'block';
-
-                setTimeout(() => {
-                    balao.style.display = 'none';
-                }, 4000);
+                setTimeout(() => { balao.style.display = 'none'; }, 4000);
             }
         });
 
-        // 4. Lógica de Envio de Mensagem
         function enviarMensagem() {
             const texto = inputMensagem.value.trim();
             if (texto !== "") {
                 socket.emit('enviar_mensagem', texto);
                 inputMensagem.value = "";
-                inputMensagem.focus(); // Garante que continua focado após enviar
+                inputMensagem.focus();
             }
         }
 
-        // Permitir apertar "Enter" para enviar
-        inputMensagem.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                enviarMensagem();
-            }
-        });
+        inputMensagem.addEventListener('keypress', (e) => { if (e.key === 'Enter') enviarMensagem(); });
 
-        // 5. MOVIMENTAÇÃO APENAS POR CLIQUE/TOQUE: Escuta o clique do mouse ou toque na tela
+        // 🗺️ LIMITA O CLIQUE AO TAMANHO EXATO DO CENÁRIO FIXO
         cenario.addEventListener('click', (e) => {
-            // Se clicar nos elementos do chat, não move o boneco
             if (e.target === inputMensagem || e.target === document.getElementById('btn-enviar')) return;
 
-            // Pega a posição do clique (no celular, o toque funciona igual aqui!)
-            minhaPosicao.x = e.clientX - 25;
-            minhaPosicao.y = e.clientY - 25;
+            // Pega as coordenadas relativas internas APENAS de dentro do quadrado do cenário
+            const retanguloCenario = cenario.getBoundingClientRect();
+            let cliqueX = e.clientX - retanguloCenario.left;
+            let cliqueY = e.clientY - retanguloCenario.top;
 
-            // Envia para o servidor
+            // Evita que o boneco ultrapasse as bordas do cenário de 800x600
+            if (cliqueX < 25) cliqueX = 25;
+            if (cliqueX > 775) cliqueX = 775;
+            if (cliqueY < 25) cliqueY = 25;
+            if (cliqueY > 575) cliqueY = 575;
+
+            minhaPosicao.x = cliqueX;
+            minhaPosicao.y = cliqueY;
+
             socket.emit('mover', minhaPosicao);
         });
     </script>
