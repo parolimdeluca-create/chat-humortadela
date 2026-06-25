@@ -9,29 +9,25 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-// Guarda as coordenadas, nick e cor de cada usuário
 const usuarios = {};
 
 io.on('connection', (socket) => {
     console.log('Um usuário entrou! ID: ' + socket.id);
 
-    // Cria o registro, mas deixa desativado até fazer login
+    // Nasce no centro exato de 1080x768 (540, 384)
     usuarios[socket.id] = { 
-        x: 400, 
-        y: 300, 
+        x: 540, 
+        y: 384, 
         nick: '', 
         cor: '#e67e22',
         ativo: false 
     };
 
-    // Escuta quando o usuário escolhe o Nick e a Cor e clica em Entrar
     socket.on('entrar_na_sala', (dadosLogin) => {
         if (usuarios[socket.id]) {
             usuarios[socket.id].nick = dadosLogin.nick;
             usuarios[socket.id].cor = dadosLogin.cor;
-            usuarios[socket.id].ativo = true; // Agora ele ganha vida!
-
-            // Envia a lista para todo mundo
+            usuarios[socket.id].ativo = true; 
             io.emit('atualizar_usuarios', usuarios);
         }
     });
