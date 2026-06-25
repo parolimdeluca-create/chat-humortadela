@@ -154,12 +154,15 @@
         const socket = io();
         const cenario = document.getElementById('cenario');
         const inputMensagem = document.getElementById('mensagem');
+        const inputNick = document.getElementById('nick');
 
         let meuId = null;
-        let minhaPosicao = { x: 540, y: 384 }; // Inicia no centro do novo mapa
+        let minhaPosicao = { x: 540, y: 384 }; 
         const usuariosConectados = {};
 
-        // Ajusta a escala dinamicamente para caber o mapa de 1080x768 no celular
+        // Foco inicial direto no campo do Nick para o usuário já abrir digitando
+        inputNick.focus();
+
         function ajustarEscala() {
             const larguraTela = window.innerWidth;
             const alturaTela = window.innerHeight;
@@ -176,8 +179,9 @@
         window.addEventListener('resize', ajustarEscala);
         window.addEventListener('load', ajustarEscala);
 
+        // 🚪 FUNÇÃO DE LOGIN
         function fazerLogin() {
-            const nickDigitado = document.getElementById('nick').value.trim();
+            const nickDigitado = inputNick.value.trim();
             const corSelecionada = document.getElementById('cor-boneco').value;
 
             if (nickDigitado === "") {
@@ -191,6 +195,13 @@
 
             socket.emit('entrar_na_sala', { nick: nickDigitado, cor: corSelecionada });
         }
+
+        // 🌟 NOVO: Escuta o Enter no campo do Nick para entrar direto!
+        inputNick.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                fazerLogin();
+            }
+        });
 
         document.addEventListener('click', (e) => {
             if (document.getElementById('tela-login').style.display === 'none' && e.target !== document.getElementById('btn-enviar')) {
@@ -275,7 +286,6 @@
             let cliqueX = (e.clientX - retanguloCenario.left) / escalaAtual;
             let cliqueY = (e.clientY - retanguloCenario.top) / escalaAtual;
 
-            // Barreiras calculadas para o mapa 1080x768
             if (cliqueX < 25) cliqueX = 25;
             if (cliqueX > 1055) cliqueX = 1055;
             if (cliqueY < 25) cliqueY = 25;
