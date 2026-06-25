@@ -102,17 +102,28 @@
 
     <!-- Conexão com o Servidor -->
     <script src="/socket.io/socket.io.js"></script>
+    <!-- Conexão com o Servidor -->
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         const cenario = document.getElementById('cenario');
         const inputMensagem = document.getElementById('mensagem');
 
         let meuId = null;
-        // Posição inicial do meu boneco
         let minhaPosicao = { x: 200, y: 200 }; 
-
-        // Guarda todos os bonecos conectados na tela
         const usuariosConectados = {};
+
+        // 🌟 NOVO: Mantém o foco na caixinha de texto o tempo todo
+        // Assim que a página abre, ela já foca na caixinha
+        inputMensagem.focus();
+
+        // Se o usuário clicar no cenário, força o foco a voltar para a caixinha na hora
+        document.addEventListener('click', (e) => {
+            // Só não puxa o foco se ele estiver clicando no botão de falar
+            if (e.target !== document.getElementById('btn-enviar')) {
+                inputMensagem.focus();
+            }
+        });
 
         // 1. Assim que conectamos, recebemos o nosso ID do servidor
         socket.on('connect', () => {
@@ -121,7 +132,6 @@
 
         // 2. Escuta a lista de usuários para desenhar na tela
         socket.on('atualizar_usuarios', (usuarios) => {
-            // Remove bonecos que saíram
             Object.keys(usuariosConectados).forEach(id => {
                 if (!usuarios[id]) {
                     usuariosConectados[id].remove();
@@ -129,16 +139,13 @@
                 }
             });
 
-            // Cria ou atualiza a posição dos bonecos
             Object.keys(usuarios).forEach(id => {
                 let boneco = usuariosConectados[id];
 
                 if (!boneco) {
-                    // Cria o elemento do boneco se ele não existir
                     boneco = document.createElement('div');
                     boneco.className = 'boneco';
                     
-                    // Cria o balão de fala grudado nele
                     const balao = document.createElement('div');
                     balao.className = 'balao';
                     boneco.appendChild(balao);
@@ -147,7 +154,6 @@
                     usuariosConectados[id] = boneco;
                 }
 
-                // Atualiza a posição visual no cenário
                 boneco.style.left = usuarios[id].x + 'px';
                 boneco.style.top = usuarios[id].y + 'px';
             });
@@ -161,7 +167,6 @@
                 balao.innerText = dados.mensagem;
                 balao.style.display = 'block';
 
-                // Sumir com o balão depois de 4 segundos
                 setTimeout(() => {
                     balao.style.display = 'none';
                 }, 4000);
@@ -174,6 +179,7 @@
             if (texto !== "") {
                 socket.emit('enviar_mensagem', texto);
                 inputMensagem.value = "";
+                inputMensagem.focus(); // Garante que continua focado após enviar
             }
         }
 
@@ -184,37 +190,16 @@
             }
         });
 
-        // 5. MOVIMENTAÇÃO: Escuta as setas do teclado para andar
-        window.addEventListener('keydown', (e) => {
-            // Se o usuário estiver digitando no input do chat, não move o boneco
-            if (document.activeElement === inputMensagem) return;
-
-            const passo = 15; // Quantidade de pixels que anda por clique
-
-            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
-                minhaPosicao.y -= passo;
-            } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
-                minhaPosicao.y += passo;
-            } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
-                minhaPosicao.x -= passo;
-            } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
-                minhaPosicao.x += passo;
-            }
-
-            // Envia a nova posição para o servidor sincronizar com todo mundo
-            socket.emit('mover', minhaPosicao);
-        });
-        // 6. MOVIMENTAÇÃO POR CLIQUE: Escuta o clique do mouse no cenário
+        // 5. MOVIMENTAÇÃO APENAS POR CLIQUE/TOQUE: Escuta o clique do mouse ou toque na tela
         cenario.addEventListener('click', (e) => {
-            // Se o usuário clicou na caixinha de texto ou no botão falar, não move o boneco
+            // Se clicar nos elementos do chat, não move o boneco
             if (e.target === inputMensagem || e.target === document.getElementById('btn-enviar')) return;
 
-            // Pega a posição exata onde o mouse clicou na tela
-            // Subtraímos 25 para o boneco ficar centralizado bem na ponta da seta do mouse
+            // Pega a posição do clique (no celular, o toque funciona igual aqui!)
             minhaPosicao.x = e.clientX - 25;
             minhaPosicao.y = e.clientY - 25;
 
-            // Envia a nova posição para o servidor sincronizar com todo mundo
+            // Envia para o servidor
             socket.emit('mover', minhaPosicao);
         });
     </script>
