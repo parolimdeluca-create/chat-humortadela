@@ -9,38 +9,50 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-// Objeto para guardar as coordenadas de cada usuário conectado
+// Guarda as coordenadas, nick e cor de cada usuário
 const usuarios = {};
 
 io.on('connection', (socket) => {
     console.log('Um usuário entrou! ID: ' + socket.id);
 
-    // Define uma posição inicial padrão para quem entra
-    usuarios[socket.id] = { x: 200, y: 200 };
+    // Cria o registro, mas deixa desativado até fazer login
+    usuarios[socket.id] = { 
+        x: 400, 
+        y: 300, 
+        nick: '', 
+        cor: '#e67e22',
+        ativo: false 
+    };
 
-    // Envia a lista atualizada para todo mundo
-    io.emit('atualizar_usuarios', usuarios);
-
-    // Escuta quando um usuário se mexe
-    socket.on('mover', (dadosPosicao) => {
+    // Escuta quando o usuário escolhe o Nick e a Cor e clica em Entrar
+    socket.on('entrar_na_sala', (dadosLogin) => {
         if (usuarios[socket.id]) {
-            usuarios[socket.id].x = dadosPosicao.x;
-            usuarios[socket.id].y = dadosPosicao.y;
-            
-            // Avisa todo mundo sobre a nova posição desse boneco
+            usuarios[socket.id].nick = dadosLogin.nick;
+            usuarios[socket.id].cor = dadosLogin.cor;
+            usuarios[socket.id].ativo = true; // Agora ele ganha vida!
+
+            // Envia a lista para todo mundo
             io.emit('atualizar_usuarios', usuarios);
         }
     });
 
-    // Escuta quando alguém envia mensagem
-    socket.on('enviar_mensagem', (msg) => {
-        io.emit('usuario_falou', {
-            id: socket.id,
-            mensagem: msg
-        });
+    socket.on('mover', (dadosPosicao) => {
+        if (usuarios[socket.id] && usuarios[socket.id].ativo) {
+            usuarios[socket.id].x = dadosPosicao.x;
+            usuarios[socket.id].y = dadosPosicao.y;
+            io.emit('atualizar_usuarios', usuarios);
+        }
     });
 
-    // Quando o usuário desconecta
+    socket.on('enviar_mensagem', (msg) => {
+        if (usuarios[socket.id] && usuarios[socket.id].ativo) {
+            io.emit('usuario_falou', {
+                id: socket.id,
+                mensagem: msg
+            });
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log('Um usuário saiu do chat.');
         delete usuarios[socket.id];
