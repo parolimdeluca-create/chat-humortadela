@@ -204,6 +204,19 @@
             // Envia a nova posição para o servidor sincronizar com todo mundo
             socket.emit('mover', minhaPosicao);
         });
+        // 6. MOVIMENTAÇÃO POR CLIQUE: Escuta o clique do mouse no cenário
+        cenario.addEventListener('click', (e) => {
+            // Se o usuário clicou na caixinha de texto ou no botão falar, não move o boneco
+            if (e.target === inputMensagem || e.target === document.getElementById('btn-enviar')) return;
+
+            // Pega a posição exata onde o mouse clicou na tela
+            // Subtraímos 25 para o boneco ficar centralizado bem na ponta da seta do mouse
+            minhaPosicao.x = e.clientX - 25;
+            minhaPosicao.y = e.clientY - 25;
+
+            // Envia a nova posição para o servidor sincronizar com todo mundo
+            socket.emit('mover', minhaPosicao);
+        });
     </script>
 </body>
 </html>
